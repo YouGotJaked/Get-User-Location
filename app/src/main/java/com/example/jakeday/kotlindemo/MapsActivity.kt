@@ -8,6 +8,11 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.util.Log
+import android.widget.Button
+import android.widget.Toast
+import com.beust.klaxon.Json
+import com.beust.klaxon.JsonObject
+import com.beust.klaxon.Parser
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
@@ -21,6 +26,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import java.io.IOException
 
 import kotlinx.android.synthetic.main.activity_maps.*
+import org.json.JSONObject
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
@@ -39,6 +45,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         mapFragment.getMapAsync(this)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        buttonSubmit(R.id.submit)
     }
 
     /**
@@ -80,36 +88,59 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private fun placeMarkerOnMap(location: LatLng) {
         val markerOptions = MarkerOptions().position(location)
 
-        val titleStr = getAddress(location)
+        val titleStr = getAddressString(getAddress(location))
         markerOptions.title(titleStr)
 
         map.addMarker(markerOptions)
     }
 
-    private fun getAddress(latLng: LatLng): String {
+    private fun getAddress(latLng: LatLng): List<Address>? {
         val geocoder = Geocoder(this)
         val addresses: List<Address>?
-        val address: Address?
-        var addressText = ""
 
         try {
             addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
-
-            if (null != addresses && !addresses.isEmpty()) {
-                address = addresses[0]
-                for (i in 0 until address.maxAddressLineIndex) {
-                    addressText += if (i == 0) address.getAddressLine(i) else "\n" + address.getAddressLine(i)
-                }
-                street.setText(addresses[0].subThoroughfare + " " + addresses[0].thoroughfare)
-                city.setText(addresses[0].locality)
-                state.setText(addresses[0].adminArea)
-                zip.setText(addresses[0].postalCode)
-            }
         } catch (e: IOException) {
             Log.e("MapsActivity", e.localizedMessage)
         }
 
+        return addresses
+    }
+
+    private fun getAddressString(addresses: List<Address>): String {
+        var addressText = ""
+        val address: Address?
+
+        if (null != addresses && !addresses.isEmpty()) {
+            address = addresses[0]
+            for (i in 0 until address.maxAddressLineIndex) {
+                addressText += if (i == 0) address.getAddressLine(i) else "\n" + address.getAddressLine(i)
+            }
+            prefillForm(addresses)
+        }
+
         return addressText
+    }
+
+    private fun prefillForm(addresses: List<Address>) {
+        street.setText(addresses[0].subThoroughfare + " " + addresses[0].thoroughfare)
+        city.setText(addresses[0].locality)
+        state.setText(addresses[0].adminArea)
+        zip.setText(addresses[0].postalCode)
+    }
+
+    private fun parseForm(input: String): JsonObject {
+        val parser = Parser()
+        val stringBuilder = StringBuilder(input)
+        val json: JsonObject = parser.parse(stringBuilder) as JsonObject
+        return json
+    }
+
+    private fun buttonSubmit(buttonId: Int) {
+        val buttonClick = findViewById<Button>(buttonId)
+        buttonClick.setOnClickListener {
+            Toast.makeText(this@MapsActivity, "Form submitted.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     companion object {
