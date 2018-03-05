@@ -10,7 +10,6 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
-import com.beust.klaxon.Json
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -23,10 +22,11 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.gson.Gson
 import java.io.IOException
 
 import kotlinx.android.synthetic.main.activity_maps.*
-import org.json.JSONObject
+
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
@@ -46,6 +46,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        /*
+        val lastLoc = LatLng(lastLocation.latitude, lastLocation.longitude)
+        buttonSubmit(R.id.submit, getAddressString(getAddress(lastLoc)))
+        */
         buttonSubmit(R.id.submit)
     }
 
@@ -96,7 +100,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     private fun getAddress(latLng: LatLng): List<Address>? {
         val geocoder = Geocoder(this)
-        val addresses: List<Address>?
+        var addresses: List<Address>?
 
         try {
             addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
@@ -128,17 +132,30 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         state.setText(addresses[0].adminArea)
         zip.setText(addresses[0].postalCode)
     }
-
+/*
     private fun parseForm(input: String): JsonObject {
         val parser = Parser()
         val stringBuilder = StringBuilder(input)
-        val json: JsonObject = parser.parse(stringBuilder) as JsonObject
-        return json
+        return parser.parse(stringBuilder) as JsonObject
     }
 
+    data class Person(val name: String, val age: Int, val messages: List<String>) {
+    }
+
+    private fun parseJson(input: JsonObject): String {
+        val json = """{"name": "Kolineer", "age": "26", "messages" : ["Master Kotlin","At Kolination"]}"""
+        val gson = Gson()
+
+        val person1 : Person = gson.fromJson(json, Person::class.java)
+        return gson.toJson(person1)
+    }
+*/
     private fun buttonSubmit(buttonId: Int) {
         val buttonClick = findViewById<Button>(buttonId)
         buttonClick.setOnClickListener {
+           // val jsonForm = parseForm(formString)
+           // val out = parseJson(jsonForm)
+           // Log.i("my tag", out[0].toString())
             Toast.makeText(this@MapsActivity, "Form submitted.", Toast.LENGTH_SHORT).show()
         }
     }
